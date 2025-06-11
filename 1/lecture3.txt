@@ -1,0 +1,2 @@
+Newton's method:
+Iteratively taking derivatives of our function to get closer and closer to the desired value (y=0).

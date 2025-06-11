@@ -1,0 +1,297 @@
+% ======================================================================
+%       Scientific Programming for Physicists – Extended Reference
+% ======================================================================
+\documentclass[a4paper,11pt]{article}
+
+% ----------------------------------------------------------------------
+% Packages
+% ----------------------------------------------------------------------
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{physics}        % derivatives, bras/kets, etc.
+\usepackage{siunitx}        % \SI{}{}
+\usepackage{graphicx}
+\usepackage{booktabs,tabularx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Code-listing settings
+\definecolor{codebg}{HTML}{F7F7F7}
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  keywordstyle=\color{blue!70!black},
+  commentstyle=\color{green!50!black},
+  stringstyle=\color{red!70!black}
+}
+
+% ----------------------------------------------------------------------
+\title{\textbf{Scientific Programming for Physicists}\\
+       \large A Fully-Annotated Reference Sheet}
+\author{Undergraduate Level}
+\date{\today}
+\begin{document}
+\maketitle
+\tableofcontents
+\bigskip
+\newpage
+
+% ======================================================================
+\section{Numerical Methods – Core Concepts}
+% ======================================================================
+
+\subsection{My interpretation}
+
+\subsection{What Are Numerical Methods?}
+\textbf{Definition.} Numerical methods are algorithmic procedures that approximate mathematical quantities with finite arithmetic.  
+Where analytic solutions are closed-form expressions (`$x=e^{-2t}\sin t$`), numerical ones are discrete data (`$x(t_i)$` stored in RAM).
+
+\begin{itemize}
+  \item \textbf{Why we need them.} Most real-world physics models—three-body orbits, turbulent flow, quantum many-body Hamiltonians—have no tractable analytic solution. Numerical techniques trade algebraic elegance for \emph{controlled error}.
+  \item \textbf{Controlled error.} A numerical scheme is useful only if it ships with a statement like “global error $< C\Delta t^{p}$” or “$\|\mathbf f\|<10^{-9}$ at convergence.”  That lets you dial precision versus compute time.
+\end{itemize}
+
+\subsection{Typical Problem Classes}
+
+\begin{itemize}
+  \item \textbf{Root finding} — solving $f(x)=0$ or $\mathbf f(\mathbf x)=\mathbf0$ (\emph{bisection}, Newton–Raphson, Powell hybrid).
+  \item \textbf{Numerical integration} — approximating $\int_a^b f(x)\,dx$ or multi-dimensional integrals (trapezoid, Simpson, Gaussian quadrature, Monte Carlo).
+  \item \textbf{ODE/PDE solvers} — time evolution problems ($\dot{\mathbf y}=\mathbf f$) and field equations (heat, wave, Schrödinger).
+  \item \textbf{Large-scale linear algebra} — eigenvalues, sparse systems, least-squares fits (CG, GMRES, power iteration).
+  \item \textbf{Optimisation} — finding minima of objective functions (steepest descent, BFGS, simulated annealing).
+\end{itemize}
+
+\subsection{Discretisation: \texorpdfstring{$\Delta t$}{Dt} and \texorpdfstring{$\Delta x$}{Dx}}
+Every numerical PDE/ODE method replaces a continuum by a mesh:
+
+\[
+  t_n = n\Delta t, \qquad x_j = j\Delta x,
+\]
+turning derivatives into finite differences.  The two central error sources are:
+
+\begin{description}
+  \item[Truncation error] $\mathcal O(\Delta t^{p},\Delta x^{q})$.  Example: Forward Euler is first-order ($p=1$).
+  \item[Rounding error] grows with each floating-point operation.  Very small steps cause millions of operations, which may swamp gains from higher $p,q$.
+\end{description}
+
+\paragraph{Stability.} The CFL condition for explicit solvers of the 1-D advection equation $u_t+cu_x=0$ is
+\[
+  \boxed{\frac{c\,\Delta t}{\Delta x}\le 1}.
+\]
+Ignoring it yields wildly growing noise—\emph{numerical blow-up}.
+
+\subsection{Forward Euler (Worked Example)}
+For the ODE $\dot y = f(t,y)$:
+\[
+  y_{n+1}=y_n+\Delta t\,f(t_n,y_n).
+\]
+If $f=y$, 
+\[
+  y_{n+1}=(1+\Delta t)\,y_n\quad\Longrightarrow\quad
+  y_n=(1+\Delta t)^n y_0\approx e^{t}\,y_0 \text{ as }\Delta t\to0.
+\]
+\textbf{Take-away.} Simple but only first-order accurate and can be unstable for stiff problems.
+
+% ======================================================================
+\section{Data Handling with \texttt{pandas}}
+% ======================================================================
+\subsection{My interpretation}
+
+\subsection{Why \texttt{pandas}?}
+\begin{itemize}
+  \item \textbf{DataFrame abstraction.} Labeled rows and columns mimic a spreadsheet or SQL table—ideal for experimental loggers or telescope catalogues.
+  \item \textbf{Vectorisation.} Operations broadcast across whole columns using NumPy C loops—two orders of magnitude faster than Python \texttt{for} loops.
+  \item \textbf{Rich I/O.} One-liners for CSV, HDF5, Parquet, SQL, Excel $\to$ DataFrame.
+\end{itemize}
+
+\paragraph{Pitfalls and Work-arounds.}
+\begin{itemize}
+  \item DataFrames are RAM-heavy; a \SI{20}{GB} CSV can exceed \SI{40}{GB} after factorisation.  For “too-big-for-RAM”, switch to \texttt{dask.dataframe} or \texttt{polars}.
+  \item Row-wise operations are slow.  Use \lstinline|df["new"]=f(df["old"])| or \texttt{numba @njit} loops.
+\end{itemize}
+
+\subsection{Mean vs.\ Median}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+\textbf{Statistic} & \textbf{Sensitivity to Outliers}\\
+\midrule
+Mean $\displaystyle\overline{x}=\frac1N\sum x_i$         & Every datum pulls equally; one extreme point drags it.\\
+Median = $50^{\text{th}}$ percentile & Immune unless more than $50\%$ of points shift.\\
+\bottomrule
+\end{tabularx}
+\medskip
+
+For power-law noise (e.g.\ earthquake magnitudes), the median better describes a “typical” event energy.
+
+\subsection{Reading a Cumulative Distribution Function (CDF)}
+
+\begin{itemize}
+  \item $F(x)=P(X\le x)$ is monotone; a vertical jump in the empirical CDF means many data share the same value.
+  \item The \textbf{median} is the $x$ where $F=0.5$; quartiles satisfy $F(Q_1)=0.25$, $F(Q_3)=0.75$.
+  \item Two CDFs: if one lies everywhere above the other, its random variable is stochastically smaller (\emph{first-order stochastic dominance}).
+\end{itemize}
+
+% ======================================================================
+\section{Monte Carlo (MC) Methods}
+% ======================================================================
+\subsection{My interpretation}
+
+\subsection{What is the Monte Carlo method?}
+Monte Carlo methods, or Monte Carlo experiments, are a broad class of \textbf{computational algorithms} that rely on repeated \textbf{random sampling} to obtain numerical results. The underlying concept is to use randomness to solve problems that might be deterministic in principle.
+\\
+Monte Carlo methods are mainly used in three distinct problem classes: optimization, numerical integration, and generating draws from a probability distribution.
+
+\subsection{Why Monte Carlo?}
+High-dimensional integrals in radiation transport or path-integral QFT scale as $\mathcal O(N^d)$ for grid methods (curse of dimensionality).  
+MC’s statistical error
+\[
+  \sigma_{\text{MC}}=\frac{\sigma_f}{\sqrt{N}}
+\]
+is \emph{dimension-independent}.  Doubling points halves error regardless of $d$.
+
+\subsection{Variance-Reduction Techniques}
+\begin{itemize}
+  \item \textbf{Importance sampling:} sample from $p(x)\propto |f(x)|$ to reduce variance by focusing effort where $f$ is large.
+  \item \textbf{Control variates:} subtract a function $g$ with known integral: $I=\int f =\int (f-g)+\int g$.
+  \item \textbf{Quasi-Monte Carlo:} deterministic Sobol or Halton sequences yield error $\mathcal O\!\bigl((\log N)^d/N\bigr)$, often faster than $1/\sqrt N$ in practice.
+\end{itemize}
+
+\subsection{Physics Applications}
+\begin{itemize}
+  \item Photon transport in stellar atmospheres.
+  \item Neutron diffusion in reactor shielding.
+  \item Metropolis sampling of the Ising model near $T_c$.
+  \item Bootstrap error bars on lattice-QCD gauge averages.
+\end{itemize}
+
+% ======================================================================
+\section{Question 4 – Non-linear Systems with \texttt{scipy.optimize.root}}
+% ======================================================================
+\subsection{My interpretation}
+
+\subsection{Annotated Code}
+
+\begin{lstlisting}
+import numpy as np
+from scipy import optimize
+
+def fun(xx):
+    x, y = xx                 # unpack vector
+    return [x + y - 3,        # f1(x,y)=0
+            x - y - 1]        # f2(x,y)=0
+
+root = optimize.root(fun, x0=(1, 1))
+print(root.x)                 # -> [2. 1.]
+\end{lstlisting}
+
+\begin{itemize}
+  \item \lstinline|x0| is a \emph{guess}. A poor guess can send iterative Newton steps to a wrong basin of attraction.
+  \item \lstinline|root.x| returns $(x,y)$.  Use \lstinline|root.success| and \lstinline|root.message| for diagnostic messages.
+\end{itemize}
+
+\subsection{Algorithm – Powell Hybrid (Default)}
+\begin{enumerate}
+  \item Approximate Jacobian $\mathbf J=\partial\mathbf f/\partial\mathbf x$ by forward differences.
+  \item Take a Newton step $\mathbf s=-\mathbf J^{-1}\mathbf f$.
+  \item If $\|\mathbf s\|$ exceeds the \emph{trust-region radius}, cut it back (\emph{dog-leg method}) to maintain global convergence.
+  \item Enlarge or shrink the radius based on function reduction.
+\end{enumerate}
+
+\subsection{When to Choose Another Method}
+If $\mathbf f$ is cheap but the Jacobian is ill-conditioned, consider \lstinline|method='lm'| (Levenberg–Marquardt).  
+For large sparse Jacobians, use \lstinline|method='krylov'| or provide an analytic sparse Jacobian with SciPy’s \texttt{csr\_matrix}.
+
+\subsection{Physics Case Study}
+The diode–resistor circuit equations:
+\[
+  \begin{cases}
+     I - I_S\!\bigl(e^{qV_D/kT}-1\bigr) = 0,\\
+     V_{\text{in}} - IR - V_D           = 0,
+  \end{cases}
+\]
+form a stiff, coupled set.  \lstinline|optimize.root| finds $(I, V_D)$ for any $V_{\text{in}}$ without manual linearisation.
+
+% ======================================================================
+\section{Question 5 – ODE Integration with \texttt{solve\_ivp}}
+% ======================================================================
+\subsection{My interpretation}  
+
+\subsection{Annotated Code}
+
+\begin{lstlisting}
+from scipy.integrate import solve_ivp
+
+# physical constants
+m, k, gamma = 1.0, 1.0, 0.15      # mass, spring, damping
+
+def rhs(t, y):
+    """
+    Damped harmonic oscillator:
+        m x'' + γ x' + k x = 0
+    Convert to first-order system for solve_ivp.
+    """
+    x, v = y
+    dxdt = v
+    dvdt = -(gamma/m) * v - (k/m) * x
+    return [dxdt, dvdt]
+
+y0     = [1.0, 0.0]               # x(0)=1 m, v(0)=0
+t_span = (0.0, 20.0)              # integrate 0 ≤ t ≤ 20 s
+
+sol = solve_ivp(rhs, t_span, y0,
+                method='RK45',     # Dormand–Prince 5(4)
+                rtol=1e-6, atol=1e-9,
+                dense_output=True)
+\end{lstlisting}
+
+\paragraph{Explanation of Each Argument}
+\begin{description}
+  \item[\texttt{rhs}] Vector-valued function $\mathbf f(t,\mathbf y)$ implementing the physics.
+  \item[\texttt{method='RK45'}] Dormand–Prince explicit pair: 5th-order solution + 4th-order estimator $\Rightarrow$ internal error guess.
+  \item[\texttt{rtol}/\texttt{atol}] Relative/absolute tolerances: solver chooses $\Delta t$ so local error $\le$ \(\text{atol}+\text{rtol}\lVert\mathbf y\rVert\).
+  \item[\texttt{dense\_output=True}] Returns a continuous interpolant \lstinline|sol.sol(t)| — handy for event location or plotting finely-spaced curves with no re-integration.
+\end{description}
+
+\subsection{Stiff vs.\ Non-stiff}
+Stiff ODEs have widely separated time-scales: explicit RK must take tiny $\Delta t$ for stability.  
+Implicit solvers (\texttt{'BDF'}, \texttt{'Radau'}) solve a nonlinear system each step but are stable for large $\Delta t$.
+
+\subsection{Events}
+Pass a list of event functions $g_i(t,\mathbf y)$; the solver stops or logs when $g_i=0$.  
+Example: projectile hitting $y=0$ detects flight time.
+
+\subsection{Typical Physics Scenarios}
+\begin{itemize}
+  \item \textbf{Kepler problem.} Two-body Newtonian gravity integrated in Cartesian coordinates; non-stiff RK45 suffices.
+  \item \textbf{RLC circuit.} For small $R$, the ODE becomes stiff; switch to BDF.
+  \item \textbf{Lotka–Volterra.} Predator–prey with periodic solutions; RK45 works, events detect cycle maxima.
+\end{itemize}
+
+% ======================================================================
+\section*{Quick-Reference Cheat Sheet}
+% ======================================================================
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Concept} & \textbf{One-line takeaway}\\
+\midrule
+Forward Euler & First-order; obey CFL else blows up.\\
+RK45 (Dormand–Prince) & Default non-stiff ODE workhorse, adaptive step.\\
+BDF/Radau & Implicit; use for chemical kinetics, plasmas, RLC with $R\!\ll\!1$.\\
+Powell hybrid root-finder & Newton + trust region; robust, fast if Jacobian known.\\
+Mean vs.\ median & Median is outlier-proof; choose for skewed data.\\
+Monte Carlo error & rms\,$\propto 1/\sqrt{N}$ regardless of dimension.\\
+Importance sampling & Reduces MC variance using smarter sampling pdf.\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ======================================================================
+\end{document}

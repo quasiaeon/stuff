@@ -1,0 +1,51 @@
+\documentclass[12pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{geometry}
+\geometry{a4paper, margin=0.5in}
+
+\begin{document}
+
+\subsection*{1.~Pamatuzdevumi}
+
+\paragraph{a) Funkcijas:}
+\begin{itemize}
+\item \texttt{xattalums(gamma, h0, v0, alpha)}: Integrē DV sistēmu līdz brīdim, kad $z=0$, un atgriež $x_{att}$. 
+\item \texttt{izmesanasatrums(gamma, h0, alpha, xatt)}: Atrod vajadzīgo $v_0$, lai sasniegtu $x_{att}$. 
+\item \texttt{optimalais\_lenkis\_v(gamma, h0, v0)}: Atrod $\alpha$, kas \emph{maksimizē} $x_{att}$ pie fiksēta $v_0$. 
+\item \texttt{optimalais\_lenkis\_x(gamma, h0, xatt)}: Atrod $\alpha$, kas \emph{minimizē} $v_0$ dotam $x_{att}$. 
+\end{itemize}
+
+\paragraph{b) \texttt{lambda} funkciju lietojums:}
+\begin{itemize}
+\item \emph{Anonīmas, īsas funkcijas} (vienā rindā), ko izmanto sakņu meklēšanā (\texttt{root\_scalar}) vai optimizācijā (\texttt{minimize}).
+\item Piemēram, \texttt{lambda t: \newline solve(t,\dots)[1][-1,1]} atgriež $z$ vērtību, bet \texttt{lambda v: xattalums(\dots)-x\_att} aprēķina starpību starp reālo un mērķa attālumu.
+\end{itemize}
+
+\subsection*{2.~Papilduzdevumi}
+
+\paragraph{1. Minimālais ātrums 30\,m distancē (bez pretestības):}
+\begin{itemize}
+\item Optimālais leņķis: 43.09$^\circ$
+\item Minimālais izmešanas ātrums: 16.59\,m/s
+\end{itemize}
+
+\paragraph{2. Mērķa izmērs, ja \(\Delta v = 2\)\,m/s (bez pretestības):}
+\begin{itemize}
+\item Izmešanas ātrums var svārstīties \(\pm2.0\)\,m/s ap 16.59\,m/s.
+\item Lidojuma attālums mainās no 23.62\,m līdz 37.18\,m.
+\item Mērķa garumam jābūt vismaz 13.56\,m.
+\end{itemize}
+
+\paragraph{3. Maksimālais attālums ar personīgo metiena ātrumu (bez pretestības):}
+\begin{itemize}
+\item Pieņemot, ka es varu mest ar \(\approx 20.0\)\,m/s.
+\item Aprēķinātais optimālais leņķis: 43.76$^\circ$.
+\item Sasniedzamais attālums: 42.58\,m.
+\end{itemize}
+
+\end{document}

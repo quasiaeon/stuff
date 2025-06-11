@@ -1,0 +1,20 @@
+dy/dx (approx.) = delta y / delta x
+
+=> delta v / delta t = g
+
+   We assume that when t=0, v=0. In order to find delta v, we choose an arbitrary delta t, for instance, delta t = 1 [s].
+   Thus:
+   v(t_0 + delta t) - v(t_0) / delta t = g
+
+   v(t_0 + delta t) = v(t_0) + delta t * g = 9.8 [m/s];
+
+   Following this, delta t remains 1 s, however, t_0 = t_1 and t_1 = t_2, i.e., t_i = 1 [s] and t_i_+_1 = 2 [s].
+   In order to find x(t), integration could be used, however, the following expression is more computationally viable.
+   Assuming x_0 = 0:
+   x = x_0 + v * t
+
+   Protocol questions:
+   1) no difference is noted / the smaller dt one
+   2) no, the formula remains the same, therefore nothing different is done computational wise.
+
+   t_theoretical = 2v_0 / g
